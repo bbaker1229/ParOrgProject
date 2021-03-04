@@ -1,0 +1,4 @@
+*.out
+*.ex
+*.o
+.vscode/
