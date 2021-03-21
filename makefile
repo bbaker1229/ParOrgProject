@@ -1,4 +1,7 @@
-all: sparse_mult.ex dense_mult.ex omp_dense.ex omp_sparse.ex cuda_dense.ex cuda_sparse.ex
+all: sparse_mult.ex dense_mult.ex omp_dense.ex omp_sparse.ex cuda_dense.ex cuda_sparse.ex mpi_dense.ex
+
+mpi_dense.ex: mpi_dense.o tools.o
+	mpicc -g -Wall mpi_dense.o tools.o -o mpi_dense.ex
 
 cuda_sparse.ex: cuda_sparse.cu
 	module load soft/cuda; nvcc cuda_sparse.cu -o cuda_sparse.ex
@@ -17,6 +20,9 @@ sparse_mult.ex: sparsemult_basic.o tools.o
 
 dense_mult.ex: matmult_basic.o tools.o 
 	gcc -Wall -g -O3 -fopenmp matmult_basic.o tools.o -o dense_mult.ex 
+
+mpi_dense.o: mpi_dense.c
+	mpicc -g -Wall -c mpi_dense.c
 
 sparsemult_basic.o: sparsemult_basic.c 
 	gcc -Wall -g -O3 -fopenmp -c sparsemult_basic.c 
