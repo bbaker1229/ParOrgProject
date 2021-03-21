@@ -6,17 +6,67 @@
 #include <unistd.h>
 //#include "tools.h"
 
-__global__ void matrixMultiply(float *A, float *B, float *C, int I, int J, int K) {
+__global__ void matrixMultiply(int *rowvec, int *colvec, float *valvec, float *B, float *C, int I, int J, int K) {
     int row = blockIdx.y*blockDim.y+threadIdx.y;
     int col = blockIdx.x*blockDim.x+threadIdx.x;
     
     float tmp = 0.0;
 
     if(row < I && col < J) {
+      tmp = C[rowvec[row]*J+col];
       for(int i=0; i<K; i++) {
-        tmp += A[row*K+i] * B[i*J+col];
+        tmp += valvec[row] * B[colvec[row]*J+col];
       }
-      C[row*J+col] = tmp;
+      C[rowvec[row]*J+col] = tmp;
+    }
+}
+
+int make_sparse_percent(float per, int rdim, int cdim, float *A) {
+    long int maxnums, cnt, check;
+    maxnums = (long int) (per * (float)rdim * (float)cdim);
+    int *vals;
+    vals = (int*) malloc(maxnums*sizeof(int));
+    for(long int i = 0; i < maxnums; i++) {
+        vals[i] = -1;
+    }
+    cnt = 0;
+    while(cnt < maxnums) {
+        long int num = rand() % (rdim * cdim + 1);
+        check = 0;
+        for(long int i = 0; i < cnt; i++) {
+            if(vals[i] == num) {
+                check = 1;
+                break;
+            }
+        }
+        if(check == 0) {
+            vals[cnt] = num;
+            cnt++;
+        }
+    }
+    for(int i=0; i < rdim; i++) {
+        for(int j=0; j < cdim; j++) {
+            for(int k=0; k < cnt; k++) {
+                if((i+1)*(j+1) == vals[k]) {
+                    A[i*cdim+j] = 0.0;
+                }
+            }
+        }
+    }
+    return rdim * cdim - maxnums + 1;
+}
+
+void make_sparse_matrix(int rdim, int cdim, int *rowval, int *colval, float *value, float *A) {
+    int cnt = 0;
+    for(int i=0; i < rdim; i++) {
+        for(int j=0; j < cdim; j++) {
+            if(A[i*cdim+j] != 0.0) {
+                rowval[cnt] = i;
+                colval[cnt] = j;
+                value[cnt] = A[i*cdim+j];
+                cnt++;
+            }
+        }
     }
 }
 
@@ -32,9 +82,11 @@ int main(int argc, char *argv[]) {
     int jdim = 400;
     int kdim = 1000;
     int i, j, k;
+    long int newdim;
     double t1;
-    float nops;
-    float *A, *B, *C, *actualC, *Ag, *Bg, *Cg;
+    float nops, per;
+    float *A, *B, *C, *actualC, *Bg, *Cg, *valg;
+    int *rowg, *colg;
     A = (float*) malloc(idim*kdim*sizeof(float));
     B = (float*) malloc(kdim*jdim*sizeof(float));
     C = (float*) malloc(idim*jdim*sizeof(float));
@@ -65,6 +117,16 @@ int main(int argc, char *argv[]) {
         B[k*jdim+j] = (float)rand() / (float)RAND_MAX;
       }
     }
+
+    per = 0.3;
+    printf("Running with %0.1f%% sparsity\n", per * 100);
+    newdim = make_sparse_percent(per, idim, kdim, A);
+    int *rowval, *colval;
+    float *value;
+    rowval = (int*) malloc(newdim*sizeof(int));
+    colval = (int*) malloc(newdim*sizeof(int));
+    value = (float*) malloc(newdim*sizeof(float));
+    make_sparse_matrix(idim, kdim, rowval, colval, value, A);
 
     printf("A matrix sample: \n");
     for(i=0; i<2; i++) {
@@ -115,14 +177,20 @@ int main(int argc, char *argv[]) {
     }
     t1 = wctime() - t1;
 */
-    cudaMalloc(&Ag, idim*kdim*sizeof(float));
+    //cudaMalloc(&Ag, idim*kdim*sizeof(float));
+    cudaMalloc(&rowg, newdim*sizeof(int));
+    cudaMalloc(&colg, newdim*sizeof(int));
+    cudaMalloc(&valg, newdim*sizeof(float));
     cudaMalloc(&Bg, kdim*jdim*sizeof(float));
     cudaMalloc(&Cg, idim*jdim*sizeof(float));
     //cudaMalloc(&I, sizeof(int));
     //cudaMalloc(&J, sizeof(int));
     //cudaMalloc(&K, sizeof(int));
     t1 = wctime();
-    cudaMemcpy(Ag, A, idim*kdim*sizeof(float), cudaMemcpyHostToDevice);
+    //cudaMemcpy(Ag, A, idim*kdim*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(rowg, rowval, newdim*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(colg, colval, newdim*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(valg, value, newdim*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(Bg, B, kdim*jdim*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(Cg, C, idim*jdim*sizeof(float), cudaMemcpyHostToDevice);
     //cudaMemcpy(I, idim, sizeof(int), cudaMemcpyHostToDevice);
@@ -139,7 +207,7 @@ int main(int argc, char *argv[]) {
     printf("threadsPerBlock: (%d, %d)\n", threadsPerBlock.x, threadsPerBlock.y);
     printf("blocksPerGrid:   (%d, %d)\n", blocksPerGrid.x, blocksPerGrid.y);
     //t1 = wctime();
-    matrixMultiply<<<blocksPerGrid, threadsPerBlock>>>(Ag, Bg, Cg, idim, jdim, kdim);
+    matrixMultiply<<<blocksPerGrid, threadsPerBlock>>>(rowg, colg, valg, Bg, Cg, newdim, jdim, kdim);
     cudaDeviceSynchronize();
     //t1 = wctime() - t1;
     cudaError_t error = cudaGetLastError();
@@ -172,7 +240,10 @@ int main(int argc, char *argv[]) {
     nops = (float) 2 * idim * kdim * jdim;
     printf("Performance = %f GFLOPs\n",nops/t1);
     printf("Error: %f\n", err/((float)idim*jdim));
-    cudaFree(Ag);
+    //cudaFree(Ag);
+    cudaFree(rowg);
+    cudaFree(colg);
+    cudaFree(valg);
     cudaFree(Bg);
     cudaFree(Cg);
     //cudaFree(I);
