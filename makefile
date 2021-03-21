@@ -1,7 +1,7 @@
 all: sparse_mult.ex dense_mult.ex omp_dense.ex omp_sparse.ex cuda_dense.ex cuda_sparse.ex mpi_dense.ex
 
 mpi_dense.ex: mpi_dense.o tools.o
-	mpicc -g -Wall mpi_dense.o tools.o -o mpi_dense.ex
+	mpicc -g -Wall mpi_dense.o tools.o -o mpi_dense.ex -lm
 
 cuda_sparse.ex: cuda_sparse.cu
 	module load soft/cuda; nvcc cuda_sparse.cu -o cuda_sparse.ex
