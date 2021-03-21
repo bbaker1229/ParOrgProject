@@ -13,13 +13,13 @@ omp_sparse.ex: openmp_sparse.o tools.o
 	gcc -Wall -g -O3 -fopenmp openmp_sparse.o tools.o -o omp_sparse.ex
 
 omp_dense.ex: openmp_matmult.o tools.o
-	gcc -Wall -g -O3 -fopenmp openmp_matmult.o tools.o -o omp_dense.ex
+	gcc -Wall -g -O3 -fopenmp openmp_matmult.o tools.o -o omp_dense.ex -lm
 
 sparse_mult.ex: sparsemult_basic.o tools.o 
 	gcc -Wall -g -O3 -fopenmp sparsemult_basic.o tools.o -o sparse_mult.ex
 
 dense_mult.ex: matmult_basic.o tools.o 
-	gcc -Wall -g -O3 -fopenmp matmult_basic.o tools.o -o dense_mult.ex 
+	gcc -Wall -g -O3 -fopenmp matmult_basic.o tools.o -o dense_mult.ex -lm
 
 mpi_dense.o: mpi_dense.c
 	mpicc -g -Wall -c mpi_dense.c
@@ -37,7 +37,7 @@ openmp_sparse.o: openmp_sparse.c
 	gcc -Wall -g -O3 -fopenmp -c openmp_sparse.c
 
 tools.o: tools.c tools.h
-	gcc -Wall -g -O3 -fopenmp -c tools.c 
+	gcc -Wall -g -O3 -fopenmp -c tools.c -lm
 
 clean:
 	rm *.o *.ex

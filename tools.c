@@ -13,33 +13,33 @@ double wctime()
   return (tv.tv_sec + 1E-6 * tv.tv_usec);
 }
 
-void print_matrix(int rdim, int cdim, float **A) {
+void print_matrix(int rdim, int cdim, float *A) {
     for(int i = 0; i < rdim; i++) {
         printf("[ ");
         for(int j = 0; j < cdim; j++) {
-            printf("%1.4f ", A[i][j]);
+            printf("%1.4f ", A[i*cdim+j]);
         }
         printf("]\n");
     }
 }
 
-void zero_init(int rdim, int cdim, float **A) {
+void zero_init(int rdim, int cdim, float *A) {
     for(int i = 0; i < rdim; i++) {
         for(int j = 0; j < cdim; j++) {
-            A[i][j] = 0.0;
+            A[i*cdim+j] = 0.0;
         }
     }
 }
 
-void rand_init(int rdim, int cdim, float **A) {
+void rand_init(int rdim, int cdim, float *A) {
     for(int i = 0; i < rdim; i++) {
         for(int j = 0; j < cdim; j++) {
-            A[i][j] = (float)rand() / (float)RAND_MAX;
+            A[i*cdim+j] = (float)rand() / (float)RAND_MAX;
         }
     }
 }
 
-int make_sparse_percent(float per, int rdim, int cdim, float **A) {
+int make_sparse_percent(float per, int rdim, int cdim, float *A) {
     long int maxnums, cnt, check;
     maxnums = (long int) (per * (float)rdim * (float)cdim);
     int *vals;
@@ -66,7 +66,7 @@ int make_sparse_percent(float per, int rdim, int cdim, float **A) {
         for(int j=0; j < cdim; j++) {
             for(int k=0; k < cnt; k++) {
                 if((i+1)*(j+1) == vals[k]) {
-                    A[i][j] = 0.0;
+                    A[i*cdim+j] = 0.0;
                 }
             }
         }
@@ -74,16 +74,47 @@ int make_sparse_percent(float per, int rdim, int cdim, float **A) {
     return rdim * cdim - maxnums + 1;
 }
 
-void make_sparse_matrix(int rdim, int cdim, int *rowval, int *colval, float *value, float **A) {
+void make_sparse_matrix(int rdim, int cdim, int *rowval, int *colval, float *value, float *A) {
     int cnt = 0;
     for(int i=0; i < rdim; i++) {
         for(int j=0; j < cdim; j++) {
-            if(A[i][j] != 0.0) {
+            if(A[i*cdim+j] != 0.0) {
                 rowval[cnt] = i;
                 colval[cnt] = j;
-                value[cnt] = A[i][j];
+                value[cnt] = A[i*cdim+j];
                 cnt++;
             }
         }
+    }
+}
+
+void matrix_mult(int rdim, int cdim, int kdim, float *A, float *B, float *C) {
+    int i, j, k;
+    for(i = 0; i < rdim; i++)
+      for(k = 0; k < kdim; k++)
+        for(j = 0; j < cdim; j++)
+          C[i*cdim+j] += A[i*kdim+k] * B[k*cdim+j];
+}
+
+float error_calc(int rdim, int cdim, float *A, float *B) {
+    int i, j;
+    float err = 0.0, t = 0.0;
+    for(i = 0; i < rdim; i++) {
+      for(j = 0; j < cdim; j++) {
+        err += ((A[i*cdim+j] - B[i*cdim+j]) * (A[i*cdim+j] - B[i*cdim+j]));
+	t += (A[i*cdim+j] * A[i*cdim+j]);
+      }
+    }
+    return(sqrt(err/t));
+}
+
+void print_sample(int rdim, int cdim, float *A, int rsize, int csize) {
+    int i, j;
+    for(i = 0; i < rsize; i++) {
+      printf("[ ");
+      for(j = 0; j < csize; j++) {
+        printf("%f ", A[i*cdim+j]);
+      }
+      printf("]\n");
     }
 }

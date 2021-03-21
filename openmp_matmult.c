@@ -9,56 +9,51 @@ int main(int argc, char *argv[]) {
     int kdim = 1000;
     int i, j, k, nt;
     double t1;
-    float nops;
-    float **A, **B, **C, **actualC;
-    A = (float**) malloc(idim*sizeof(float*));
-    B = (float**) malloc(kdim*sizeof(float*));
-    C = (float**) malloc(idim*sizeof(float*));
-    actualC = (float**) malloc(idim*sizeof(float*));
-    for(i=0; i<idim; i++) {
-        A[i] = (float*) malloc(kdim*sizeof(float));
-        C[i] = (float*) malloc(jdim*sizeof(float));
-        actualC[i] = (float*) malloc(jdim*sizeof(float));
-    }
-    for(i=0; i<kdim; i++) {
-        B[i] = (float*) malloc(jdim*sizeof(float));
-    }
+    float nops, err;
+    float *A, *B, *C, *actualC;
+    A = (float*) malloc(idim*kdim*sizeof(float));
+    B = (float*) malloc(kdim*jdim*sizeof(float));
+    C = (float*) malloc(idim*jdim*sizeof(float));
+    actualC = (float*) malloc(idim*jdim*sizeof(float));
 
+    // Initialize matrices
     zero_init(idim, jdim, C);
     zero_init(idim, jdim, actualC);
     rand_init(idim, kdim, A);
     rand_init(kdim, jdim, B);
 
+    //printf("A matrix sample: \n");
+    //print_sample(idim, kdim, A, 2, 10);
+    //printf("B matrix sample: \n");
+    //print_sample(kdim, jdim, B, 2, 10);
     // This is the standard matrix multiplication - do not adjust
-    for(i = 0; i < idim; i++) {
-        for(k = 0; k < kdim; k++) {
-            for(j = 0; j < jdim; j++) {
-                actualC[i][j] += A[i][k] * B[k][j];
-            }
-        }
-    }
+    matrix_mult(idim, jdim, kdim, A, B, actualC);
 
+    //printf("actualC matrix sample: \n");
+    //print_sample(idim, jdim, actualC, 2, 10);
+    // Begin test multiplication
     #pragma omp parallel
     nt = omp_get_num_threads();
     printf("Running with %d threads\n", nt);
-    t1 = wctime();
-    #pragma omp parallel for
-    for(i = 0; i < idim; i++) {
-        for(k = 0; k < kdim; k++) {
-            for(j = 0; j < jdim; j++) {
-                C[i][j] += A[i][k] * B[k][j];
-            }
-        }
-    }
-    t1 = wctime() - t1;
-
-    // error calculation
-    float err = 0.0;
+    t1 = wctime();  // record start time
+    #pragma omp parallel shared(A, B, C) private(i, j, k) 
+    {
+    #pragma omp for schedule(static)
     for(i = 0; i < idim; i++) {
         for(j = 0; j < jdim; j++) {
-            err += (actualC[i][j] - C[i][j]);
-        }
+	    for(k = 0; k < kdim; k++) {
+                C[i*jdim+j] += (A[i*kdim+k] * B[k*jdim+j]);
+	    }
+	}
     }
+    }
+    t1 = wctime() - t1;  // record elapsed time
+
+    //printf("C matrix sample: \n");
+    //print_sample(idim, jdim, C, 2, 10);
+
+    // error calculation
+    err = error_calc(idim, jdim, actualC, C);
 
     printf("Finished in %lf seconds\n", t1);
     t1 *= (1.e+09);
