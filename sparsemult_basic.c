@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <omp.h>
 #include "tools.h"
 
 int main(int argc, char *argv[]) {
@@ -23,17 +22,20 @@ int main(int argc, char *argv[]) {
     rand_init(idim, kdim, A);
     rand_init(kdim, jdim, B);
 
-    per = 0.3;
+    if(argc == 1)
+      per = 0.3;
+    else
+      per = atof(argv[1]);
     printf("Running with %0.1f%% sparsity\n", per * 100);
     newdim = make_sparse_percent(per, idim, kdim, A);
     //printf("A matrix sample: \n");
-    //print_matrix(idim, kdim, A);
+    //print_sample(idim, kdim, A, 2, 10);
     //printf("B matrix sample: \n");
-    //print_matrix(kdim, jdim, B);
+    //print_sample(kdim, jdim, B, 2, 10);
     // This is the standard matrix multiplication - do not adjust
     matrix_mult(idim, jdim, kdim, A, B, actualC);
     //printf("actualC matrix sample: \n");
-    //print_matrix(idim, jdim, actualC);
+    //print_sample(idim, jdim, actualC, 2, 10);
 
     int *rowval, *colval;
     float *value;
@@ -42,42 +44,15 @@ int main(int argc, char *argv[]) {
     value = (float*) malloc(newdim*sizeof(float));
     make_sparse_matrix(idim, kdim, rowval, colval, value, &rowlen, &vallen, A);
 
-    //printf("Values: \n");
-    //printf("[ ");
-    //for(i=0; i<vallen; i++) {
-    //  printf("%f ", value[i]);
-    //}
-    //printf("]\n");
-    //printf("Column Vector: \n");
-    //printf("[ ");
-    //for(i=0; i<vallen; i++) {
-    //  printf("%d ", colval[i]);
-    //}
-    //printf("]\n");
-    //printf("Row Vector: \n");
-    //printf("[ ");
-    //for(i=0; i<rowlen; i++) {
-    //  printf("%d ", rowval[i]);
-    //}
-    //printf("]\n");
-
     t1 = wctime();
-    for(i=0; i<rowlen-1; i++) {
-      for(j=0; j<jdim; j++) {
-        for(k=rowval[i]; k<rowval[i+1]; k++) {
+    for(i=0; i<rowlen-1; i++)
+      for(j=0; j<jdim; j++)
+        for(k=rowval[i]; k<rowval[i+1]; k++)
 	  C[i*jdim+j] += value[k] * B[colval[k]*jdim+j];
-	}
-      }
-    }
-    /*for(i=0; i < newdim; i++) {
-        for(j=0; j < jdim; j++) {
-            C[rowval[i]*jdim+j] += value[i] * B[colval[i]*jdim+j];
-        }
-    }*/
     t1 = wctime() - t1;
 
     //printf("C matrix sample: \n");
-    //print_matrix(idim, jdim, C);
+    //print_sample(idim, jdim, C, 2, 10);
 
     // error calculation
     err = error_calc(idim, jdim, actualC, C);
