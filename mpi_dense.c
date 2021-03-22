@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
     printf("Running with %d procs.\n", nprocs);
     t1 = wctime();
     nloc = (int) (idim + nprocs - 1) / nprocs;
+    //printf("proc %d using nloc of %d.\n", myid, nloc);
     myA = (float*) malloc(nloc*kdim*sizeof(float));
     sendMe = (float*) malloc(nloc*kdim*sizeof(float));
     for(i = 0; i < nloc; i++) {
@@ -85,9 +86,10 @@ int main(int argc, char *argv[]) {
 	//printf("found counts from proc %d using tag %d.\n", status.MPI_SOURCE, status.MPI_TAG);
         MPI_Recv(myC, counter, MPI_FLOAT, status.MPI_SOURCE, status.MPI_TAG, MPI_COMM_WORLD, &status);
 	//printf("recieved data from proc %d, in %d counts.\n", status.MPI_SOURCE, counter);
-	nloc = (int) counter / jdim;
-	//printf("nloc = %d.\n", nloc);
-	for(i=0; i<nloc; i++) {
+	counter = (int) counter / jdim;
+	//printf("nloc = %d.\n", counter);
+	//print_sample(counter, jdim, myC, 2, 10);
+	for(i=0; i<counter; i++) {
           k = i + nloc * status.MPI_TAG;
           for(j=0; j<jdim; j++) {
             C[k*jdim+j] = myC[i*jdim+j];
@@ -115,6 +117,7 @@ int main(int argc, char *argv[]) {
     nloc = (int) (idim + nprocs - 1) / nprocs;
     if(myid == (nprocs - 1))
       nloc = idim - nloc*(nprocs - 1);
+    //printf("proc %d using nloc of %d.\n", myid, nloc);
     myA = (float*) malloc(nloc*kdim*sizeof(float));
     MPI_Recv(myA, nloc*kdim, MPI_FLOAT, 0, myid, MPI_COMM_WORLD, &status);
     //printf("Proc %d recieved part of A.\n", myid);
