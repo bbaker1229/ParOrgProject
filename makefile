@@ -16,7 +16,7 @@ omp_dense.ex: openmp_matmult.o tools.o
 	gcc -Wall -g -O3 -fopenmp openmp_matmult.o tools.o -o omp_dense.ex -lm
 
 sparse_mult.ex: sparsemult_basic.o tools.o 
-	gcc -Wall -g -O3 -fopenmp sparsemult_basic.o tools.o -o sparse_mult.ex
+	gcc -Wall -g -O3 -fopenmp sparsemult_basic.o tools.o -o sparse_mult.ex -lm
 
 dense_mult.ex: matmult_basic.o tools.o 
 	gcc -Wall -g -O3 -fopenmp matmult_basic.o tools.o -o dense_mult.ex -lm
