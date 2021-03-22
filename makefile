@@ -10,7 +10,7 @@ cuda_dense.ex: cuda_dense.cu
 	module load soft/cuda; nvcc cuda_dense.cu -o cuda_dense.ex
 
 omp_sparse.ex: openmp_sparse.o tools.o
-	gcc -Wall -g -O3 -fopenmp openmp_sparse.o tools.o -o omp_sparse.ex
+	gcc -Wall -g -O3 -fopenmp openmp_sparse.o tools.o -o omp_sparse.ex -lm
 
 omp_dense.ex: openmp_matmult.o tools.o
 	gcc -Wall -g -O3 -fopenmp openmp_matmult.o tools.o -o omp_dense.ex -lm
