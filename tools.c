@@ -74,8 +74,10 @@ int make_sparse_percent(float per, int rdim, int cdim, float *A) {
     return rdim * cdim - maxnums + 1;
 }
 
-void make_sparse_matrix(int rdim, int cdim, int *rowval, int *colval, float *value, float *A) {
-    int cnt = 0;
+void make_sparse_matrix(int rdim, int cdim, int *rowval, int *colval, float *value, int *rowval_size, int *val_size, float *A) {
+    int cnt = 0, cnt1;
+    rowval[0] = 0;
+    cnt1 = 1;
     for(int i=0; i < rdim; i++) {
         for(int j=0; j < cdim; j++) {
             if(A[i*cdim+j] != 0.0) {
@@ -85,7 +87,11 @@ void make_sparse_matrix(int rdim, int cdim, int *rowval, int *colval, float *val
                 cnt++;
             }
         }
+	rowval[cnt1] = cnt;
+	cnt1++;
     }
+    *val_size = cnt;
+    *rowval_size = cnt1;
 }
 
 void matrix_mult(int rdim, int cdim, int kdim, float *A, float *B, float *C) {

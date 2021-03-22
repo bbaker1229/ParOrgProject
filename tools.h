@@ -18,7 +18,7 @@ void rand_init(int rdim, int cdim, float *A);
 
 int make_sparse_percent(float per, int rdim, int cdim, float *A);
 
-void make_sparse_matrix(int rdim, int cdim, int *rowval, int *colval, float *value, float *A);
+void make_sparse_matrix(int rdim, int cdim, int *rowval, int *colval, float *value, int *rowval_size, int *val_size, float *A);
 
 void matrix_mult(int rdim, int cdim, int kdim, float *A, float *B, float *C);
 
