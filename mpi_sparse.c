@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     //print_sample(idim, jdim, actualC, 2, 10);
     //C = actualC;
     printf("Running with %d procs.\n", nprocs);
-    t1 = wctime();
+    //t1 = wctime();
     nloc = (int) (jdim + nprocs - 1) / nprocs;
     //printf("proc %d using nloc of %d.\n", myid, nloc);
     myB = (float*) malloc(nloc*kdim*sizeof(float));
@@ -104,10 +104,11 @@ int main(int argc, char *argv[]) {
       //printf("Sent data to proc %d.\n", p);
     }
       //printf("Calculate data...\n");
+      t1 = wctime();
       myC = (float*) malloc(idim*nloc*sizeof(float));
       for(i=0; i<rowlen-1; i++)
-        for(j=0; j<nloc; j++)
-          for(k=rowval[i]; k<rowval[i+1]; k++)
+        for(k=rowval[i]; k<rowval[i+1]; k++)
+          for(j=0; j<nloc; j++)
 	    myC[i*nloc+j] += value[k] * myB[colval[k]*nloc+j];
       //matrix_mult(nloc, jdim, kdim, myA, B, myC);
       for(i=0; i<nloc; i++) {
@@ -164,13 +165,10 @@ int main(int argc, char *argv[]) {
     //MPI_Bcast(A, idim*kdim, MPI_FLOAT, 0, MPI_COMM_WORLD);
     //MPI_Bcast(B, kdim*jdim, MPI_FLOAT, 100, MPI_COMM_WORLD);
     myC = (float*) malloc(idim*nloc*sizeof(float));
-    for(i=0; i<rowlen-1; i++) {
-      for(j=0; j<nloc; j++) {
-	myC[i*nloc+j] = 0.0;
-        for(k=rowval[i]; k<rowval[i+1]; k++)
+    for(i=0; i<rowlen-1; i++)
+      for(k=rowval[i]; k<rowval[i+1]; k++)
+        for(j=0; j<nloc; j++)
           myC[i*nloc+j] += value[k] * myB[colval[k]*nloc+j];
-      }
-    }
     //matrix_mult(nloc, jdim, kdim, myA, B, myC);
     MPI_Send(myC, nloc*idim, MPI_FLOAT, 0, myid, MPI_COMM_WORLD);
     //printf("Proc %d sent part of C.\n", myid);

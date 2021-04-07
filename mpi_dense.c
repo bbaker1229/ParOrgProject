@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     //print_sample(idim, jdim, actualC, 2, 10);
     //C = actualC;
     printf("Running with %d procs.\n", nprocs);
-    t1 = wctime();
+    //t1 = wctime();
     nloc = (int) (idim + nprocs - 1) / nprocs;
     //printf("proc %d using nloc of %d.\n", myid, nloc);
     myA = (float*) malloc(nloc*kdim*sizeof(float));
@@ -70,6 +70,7 @@ int main(int argc, char *argv[]) {
       MPI_Send(sendMe, counter, MPI_FLOAT, p, p, MPI_COMM_WORLD);
       //printf("Sent data to proc %d.\n", p);
     }
+    t1 = wctime();
       //printf("Calculate data...\n");
       myC = (float*) malloc(nloc*jdim*sizeof(float));
       matrix_mult(nloc, jdim, kdim, myA, B, myC);
