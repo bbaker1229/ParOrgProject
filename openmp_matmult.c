@@ -40,8 +40,8 @@ int main(int argc, char *argv[]) {
     {
     #pragma omp for schedule(static)
     for(i = 0; i < idim; i++) {
-        for(j = 0; j < jdim; j++) {
-	    for(k = 0; k < kdim; k++) {
+        for(k = 0; k < kdim; k++) {
+	    for(j = 0; j < jdim; j++) {
                 C[i*jdim+j] += (A[i*kdim+k] * B[k*jdim+j]);
 	    }
 	}

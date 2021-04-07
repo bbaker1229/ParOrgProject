@@ -51,8 +51,8 @@ int main(int argc, char *argv[]) {
     t1 = wctime();
     #pragma omp parallel for
     for(i=0; i<rowlen-1; i++)
-      for(j=0; j<jdim; j++)
-        for(k=rowval[i]; k<rowval[i+1]; k++)
+      for(k=rowval[i]; k<rowval[i+1]; k++)
+        for(j=0; j<jdim; j++)
 	  C[i*jdim+j] += value[k] * B[colval[k]*jdim+j];
     t1 = wctime() - t1;
 
