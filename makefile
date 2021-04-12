@@ -1,4 +1,7 @@
-all: sparse_mult.ex dense_mult.ex omp_dense.ex omp_sparse.ex cuda_dense.ex cuda_sparse.ex mpi_dense.ex mpi_sparse.ex
+all: sparse_mult.ex dense_mult.ex omp_dense.ex omp_sparse.ex cuda_dense.ex cuda_sparse.ex mpi_dense.ex mpi_sparse.ex tile_omp_dense.ex
+
+tile_omp_dense.ex: omp_dense_tile.o tools.o
+	gcc -Wall -g -O3 -fopenmp omp_dense_tile.o tools.o -o tile_omp_dense.ex -lm
 
 mpi_sparse.ex: mpi_sparse.o tools.o
 	mpicc -g -Wall mpi_sparse.o tools.o -o mpi_sparse.ex -lm
@@ -23,6 +26,9 @@ sparse_mult.ex: sparsemult_basic.o tools.o
 
 dense_mult.ex: matmult_basic.o tools.o 
 	gcc -Wall -g -O3 -fopenmp matmult_basic.o tools.o -o dense_mult.ex -lm
+
+omp_dense_tile.o: omp_dense_tile.c
+	gcc -Wall -g -O3 -fopenmp -c omp_dense_tile.c
 
 mpi_sparse.o: mpi_sparse.c
 	mpicc -g -Wall -c mpi_sparse.c
