@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     int kdim = 1000;
     int rowlen, vallen;
     long int newdim;
-    double t1;
+    double t1, times[20];
     float nops, per, err;
     float *A, *B, *C, *actualC, *Bg, *Cg, *valg;
     int *rowg, *colg;
@@ -76,6 +76,8 @@ int main(int argc, char *argv[]) {
     cudaMalloc(&Bg, kdim*jdim*sizeof(float));
     cudaMalloc(&Cg, idim*jdim*sizeof(float));
 
+    for(int loop_cnt = 0; loop_cnt < 200; loop_cnt++) {
+    printf("cnt: %d\n", loop_cnt);
     t1 = wctime();
     cudaMemcpy(rowg, rowval, newdim*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(colg, colval, newdim*sizeof(int), cudaMemcpyHostToDevice);
@@ -104,6 +106,10 @@ int main(int argc, char *argv[]) {
     }
     cudaMemcpy(C, Cg, idim*jdim*sizeof(float), cudaMemcpyDeviceToHost);
     t1 = wctime() - t1;
+    times[loop_cnt] = t1;
+    if(loop_cnt != 19)
+      zero_init(idim, jdim, C);
+    }
 
     //printf("C matrix sample: \n");
     //print_sample(idim, jdim, C, 2, 10);
@@ -111,6 +117,10 @@ int main(int argc, char *argv[]) {
     // error calculation
     err = error_calc(idim, jdim, actualC, C);
 
+    t1 = 0.0;
+    for(int i=0; i < 20; i++)
+      t1 += times[i];
+    t1 /= (float) 20;
     printf("Finished in %lf seconds\n", t1);
     t1 *= (1.e+09);
     nops = (float) 2 * idim * kdim * jdim;

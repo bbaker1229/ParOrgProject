@@ -5,8 +5,8 @@
 #include "tools.h"
 
 int main(int argc, char *argv[]) {
-    int idim = 200;
-    int jdim = 400;
+    int idim = 1000;
+    int jdim = 1000;
     int kdim = 1000;
     int i, j, k, p, nloc, counter, rowlen, vallen;
     long int newdim;

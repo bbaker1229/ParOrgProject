@@ -3,11 +3,11 @@
 #include "tools.h"
 
 int main(int argc, char *argv[]) {
-    int idim = 200;
-    int jdim = 400;
+    int idim = 1000;
+    int jdim = 1000;
     int kdim = 1000;
     int i, j, k;
-    double t1;
+    double t1, times[200];
     float nops, err;
     float *A, *B, *C, *actualC;
     A = (float*) malloc(idim*kdim*sizeof(float));
@@ -31,12 +31,17 @@ int main(int argc, char *argv[]) {
     //printf("actualC matrix sample: \n");
     //print_sample(idim, jdim, actualC, 2, 10);
     // Begin test multiplication
+    for(int loop_cnt = 0; loop_cnt < 200; loop_cnt++) {
     t1 = wctime();  // record start time
     for(i = 0; i < idim; i++)
         for(k = 0; k < kdim; k++)
             for(j = 0; j < jdim; j++)
                 C[i*jdim+j] += A[i*kdim+k] * B[k*jdim+j];
     t1 = wctime() - t1;  // record elapsed time
+    times[loop_cnt] = t1;
+    if(loop_cnt != 199)
+      zero_init(idim, jdim, C);
+    }
 
     //printf("C matrix sample: \n");
     //print_sample(idim, jdim, C, 2, 10);
@@ -44,6 +49,10 @@ int main(int argc, char *argv[]) {
     // error calculation
     err = error_calc(idim, jdim, actualC, C);
 
+    t1 = 0.0;
+    for(i=0; i < 200; i++)
+      t1 += times[i];
+    t1 /= (float) 200;
     printf("Finished in %lf seconds\n", t1);
     t1 *= (1.e+09);
     nops = (float) 2 * idim * kdim * jdim;
