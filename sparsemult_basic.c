@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     int i, j, k, rowlen, vallen;
     long int newdim;
     float nops, per, err;
-    double t1, times[200];
+    double t1, times[20];
     float *A, *B, *C, *actualC;
     A = (float*) malloc(idim*kdim*sizeof(float));
     B = (float*) malloc(kdim*jdim*sizeof(float));
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
     value = (float*) malloc(newdim*sizeof(float));
     make_sparse_matrix(idim, kdim, rowval, colval, value, &rowlen, &vallen, A);
 
-    for(int loop_cnt = 0; loop_cnt < 200; loop_cnt++) {
+    for(int loop_cnt = 0; loop_cnt < 20; loop_cnt++) {
     t1 = wctime();
     for(i=0; i<rowlen-1; i++)
       for(j=0; j<jdim; j++)
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 	  C[i*jdim+j] += value[k] * B[colval[k]*jdim+j];
     t1 = wctime() - t1;
     times[loop_cnt] = t1;
-    if(loop_cnt != 199)
+    if(loop_cnt != 19)
       zero_init(idim, jdim, C);
     }
 
@@ -63,9 +63,9 @@ int main(int argc, char *argv[]) {
     err = error_calc(idim, jdim, actualC, C);
 
     t1 = 0.0;
-    for(i=0; i < 200; i++)
+    for(i=0; i < 20; i++)
       t1 += times[i];
-    t1 /= (float) 200;
+    t1 /= (float) 20;
     printf("Finished in %lf seconds\n", t1);
     t1 *= (1.e+09);
     nops = (float) 2 * idim * kdim * jdim;

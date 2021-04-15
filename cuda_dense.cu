@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     int idim = 1000;
     int jdim = 1000;
     int kdim = 1000;
-    double t1, times[200];
+    double t1, times[20];
     float nops, err;
     float *A, *B, *C, *actualC, *Ag, *Bg, *Cg;
     A = (float*) malloc(idim*kdim*sizeof(float));
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     cudaMalloc(&Bg, kdim*jdim*sizeof(float));
     cudaMalloc(&Cg, idim*jdim*sizeof(float));
     
-    for(int loop_cnt = 0; loop_cnt < 200; loop_cnt++) {
+    for(int loop_cnt = 0; loop_cnt < 20; loop_cnt++) {
     t1 = wctime();
     cudaMemcpy(Ag, A, idim*kdim*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(Bg, B, kdim*jdim*sizeof(float), cudaMemcpyHostToDevice);
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
     cudaMemcpy(C, Cg, idim*jdim*sizeof(float), cudaMemcpyDeviceToHost);
     t1 = wctime() - t1;
     times[loop_cnt] = t1;
-    if(loop_cnt != 199)
+    if(loop_cnt != 19)
       zero_init(idim, jdim, C);
     }
     
@@ -96,9 +96,9 @@ int main(int argc, char *argv[]) {
     err = error_calc(idim, jdim, actualC, C);
 
     t1 = 0.0;
-    for(int i=0; i < 200; i++)
+    for(int i=0; i < 20; i++)
 	    t1 += times[i];
-    t1 /= (float) 200;
+    t1 /= (float) 20;
     printf("Finished in %lf seconds\n", t1);
     t1 *= (1.e+09);
     nops = (float) 2 * idim * kdim * jdim;

@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
     cudaMalloc(&Bg, kdim*jdim*sizeof(float));
     cudaMalloc(&Cg, idim*jdim*sizeof(float));
 
-    for(int loop_cnt = 0; loop_cnt < 200; loop_cnt++) {
+    for(int loop_cnt = 0; loop_cnt < 20; loop_cnt++) {
     printf("cnt: %d\n", loop_cnt);
     t1 = wctime();
     cudaMemcpy(rowg, rowval, newdim*sizeof(int), cudaMemcpyHostToDevice);
