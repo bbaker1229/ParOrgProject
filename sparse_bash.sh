@@ -1,3 +1,6 @@
+echo "Sequential"
+./sparse_mult.ex 
+
 echo "1 thread"
 export OMP_NUM_THREADS=1
 ./omp_sparse.ex

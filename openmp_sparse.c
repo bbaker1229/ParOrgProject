@@ -45,10 +45,11 @@ int main(int argc, char *argv[]) {
     value = (float*) malloc(newdim*sizeof(float));
     make_sparse_matrix(idim, kdim, rowval, colval, value, &rowlen, &vallen, A);
 
+    for(int loop_cnt = 0; loop_cnt < 20; loop_cnt++) {
     #pragma omp parallel
     nt = omp_get_num_threads();
     printf("Running with %d threads\n", nt);
-    for(int loop_cnt = 0; loop_cnt < 20; loop_cnt++) {
+
     t1 = wctime();
     #pragma omp parallel for
     for(i=0; i<rowlen-1; i++)
