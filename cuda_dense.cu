@@ -3,6 +3,9 @@
 #include <math.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <cuda_runtime.h>
+#include <helper_functions.h>
+#include <helper_cuda.h>
 
 __global__ void matrixMultiply(float *A, float *B, float *C, int I, int J, int K) {
     int row = blockIdx.y*blockDim.y+threadIdx.y;
@@ -32,6 +35,8 @@ int main(int argc, char *argv[]) {
     double t1, times[20];
     float nops, err;
     float *A, *B, *C, *actualC, *Ag, *Bg, *Cg;
+    cudaStream_t stream;
+
     A = (float*) malloc(idim*kdim*sizeof(float));
     B = (float*) malloc(kdim*jdim*sizeof(float));
     C = (float*) malloc(idim*jdim*sizeof(float));
@@ -59,9 +64,10 @@ int main(int argc, char *argv[]) {
     
     for(int loop_cnt = 0; loop_cnt < 20; loop_cnt++) {
     t1 = wctime();
-    cudaMemcpy(Ag, A, idim*kdim*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(Bg, B, kdim*jdim*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(Cg, C, idim*jdim*sizeof(float), cudaMemcpyHostToDevice);
+    cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking);
+    cudaMemcpyAsync(Ag, A, idim*kdim*sizeof(float), cudaMemcpyHostToDevice, stream);
+    cudaMemcpyAsync(Bg, B, kdim*jdim*sizeof(float), cudaMemcpyHostToDevice, stream);
+    cudaMemcpyAsync(Cg, C, idim*jdim*sizeof(float), cudaMemcpyHostToDevice, stream);
     
     dim3 threadsPerBlock(jdim*idim, 2);
     dim3 blocksPerGrid(1, 1);
@@ -75,14 +81,15 @@ int main(int argc, char *argv[]) {
     //printf("blocksPerGrid:   (%d, %d)\n", blocksPerGrid.x, blocksPerGrid.y);
     //t1 = wctime();
     matrixMultiply<<<blocksPerGrid, threadsPerBlock>>>(Ag, Bg, Cg, idim, jdim, kdim);
-    cudaDeviceSynchronize();
+    cudaStreamSynchronize(stream);
     //t1 = wctime() - t1;
     cudaError_t error = cudaGetLastError();
     if (error) {
       printf("CUDA error: %s \n", cudaGetErrorString(error));
       exit(1);
     }
-    cudaMemcpy(C, Cg, idim*jdim*sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpyAsync(C, Cg, idim*jdim*sizeof(float), cudaMemcpyDeviceToHost, stream);
+    cudaStreamSynchronize(stream);
     t1 = wctime() - t1;
     times[loop_cnt] = t1;
     if(loop_cnt != 19)
@@ -107,6 +114,7 @@ int main(int argc, char *argv[]) {
     cudaFree(Ag);
     cudaFree(Bg);
     cudaFree(Cg);
+    cudaStreamDestroy(stream);
     return(0);
 }
 
